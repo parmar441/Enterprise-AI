@@ -25,26 +25,25 @@ def parse(blob:bytes, suffix:str):
     return [(1,blob.decode('utf-8'))]
 
 
-
 def chunks(text, size=1200, overlap=180):
-    text=' '.join(text.split())
-    pos=0
-    while pos<len(text):
+    text = ' '.join(text.split())
+    pos = 0
+    while pos < len(text):
         yield text[pos:pos+size]
-        if pos+size>=len(text): break
-        pos+=size-overlap
+        if pos+size >= len(text): break
+        pos += size-overlap
 
 
 @trace("process_s3_key")
 def process_s3_key(key):
-    s=settings()
+    s = settings()
     with connection() as conn:
-        doc=conn.execute('SELECT * FROM documents WHERE s3_key=%s FOR UPDATE',(key,)).fetchone()
+        doc = conn.execute('SELECT * FROM documents WHERE s3_key=%s FOR UPDATE',(key,)).fetchone()
         if not doc or doc['status']=='ready': return
         if doc['status'] not in ('pending','failed'): return
         conn.execute("UPDATE documents SET status='processing' WHERE id=%s",(doc['id'],))
     try:
-        obj=client('s3').get_object(Bucket=s.s3_bucket,Key=key)
+        obj=client('s3').get_object(Bucket=s.s3_bucket, Key=key)
         if obj['ContentLength']>s.max_upload_bytes: raise ValueError('Upload too large')
         blob=obj['Body'].read(s.max_upload_bytes+1)
         if len(blob)>s.max_upload_bytes: raise ValueError('Upload too large')
