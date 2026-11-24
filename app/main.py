@@ -78,7 +78,7 @@ def create_upload(body:Upload,p:Principal=Depends(principal)):
 
 
 class CompleteUpload(BaseModel):
-    document_id:uuid.UUID
+    document_id : uuid.UUID
 
 
 @app.post('/api/documents/complete')
@@ -119,7 +119,7 @@ def ask(body:Ask,p:Principal=Depends(principal)):
         return {'answer':'This request requires administrator approval before any action. Open the Approvals tab to review it.','sources':[],'status':'pending_approval','approval_id':str(row['id'])}
     conversation_id=body.conversation_id or uuid.uuid4()
     prior=history(p.tenant,conversation_id)
-    result=chat(p,body.question,prior)
+    result=chat(p, body.question, prior)
     save_turn(p.tenant,conversation_id,body.question,result['answer'])
     if result.get('answer')=='The response was blocked by the sensitive-data output guardrail.':
         with connection() as conn:
